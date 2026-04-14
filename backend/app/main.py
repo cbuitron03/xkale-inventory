@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import usuarios_router, tecnicos_router, laptops_router, tickets_router
 from app.routers.auth import router as auth_router
+from app.routers.consultas import router as consultas_router
 
 app = FastAPI(
     title="Xkale Inventory API",
@@ -22,6 +23,7 @@ app.include_router(usuarios_router)
 app.include_router(tecnicos_router)
 app.include_router(laptops_router)
 app.include_router(tickets_router)
+app.include_router(consultas_router)
 
 @app.get("/")
 def root():
