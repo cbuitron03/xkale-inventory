@@ -130,7 +130,14 @@ export default function LaptopsPage() {
               <Tr><Td colSpan={7} className="text-center text-muted py-10">No hay laptops registradas</Td></Tr>
             ) : filtered.map(l => (
               <Tr key={l.id_laptop}>
-                <Td className="font-mono text-primary font-semibold">{l.hostname || '—'}</Td>
+                <Td>
+                  <button
+                    onClick={() => navigate(`/laptops/${l.hostname}`)}
+                    className="font-mono text-primary font-semibold hover:underline"
+                  >
+                    {l.hostname || '—'}
+                  </button>
+                </Td>
                 <Td className="font-mono text-xs">{l.serial || '—'}</Td>
                 <Td>
                   <p className="text-white font-medium">{l.marca}</p>
@@ -200,3 +207,4 @@ export default function LaptopsPage() {
     </div>
   );
 }
+// navegación agregada via patch
