@@ -8,6 +8,7 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Search, Laptop, RefreshCw } from 'lucide-react';
 
 const EMPTY = {
@@ -18,6 +19,7 @@ const EMPTY = {
 
 export default function LaptopsPage() {
   const { canCreateLaptop, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [laptops,   setLaptops]   = useState([]);
   const [usuarios,  setUsuarios]  = useState([]);
   const [loading,   setLoading]   = useState(true);
