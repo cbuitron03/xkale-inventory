@@ -94,12 +94,7 @@ export default function AuthUsersPage() {
               <Tr key={u.id_auth}>
                 <Td className="text-muted font-mono text-xs">#{u.id_auth}</Td>
                 <Td>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary-glow border border-primary border-opacity-30 flex items-center justify-center shrink-0">
-                      <ShieldCheck size={14} className="text-primary" />
-                    </div>
-                    <p className="text-white font-medium">{u.username}</p>
-                  </div>
+                  <p className="text-white font-medium">{u.username}</p>
                 </Td>
                 <Td className="text-secondary text-sm">{u.email || '—'}</Td>
                 <Td><Badge value={u.rol} /></Td>

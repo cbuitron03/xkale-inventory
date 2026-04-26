@@ -9,7 +9,7 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, RefreshCw, AlertTriangle, Clock, CheckCircle, List } from 'lucide-react';
 
 const EMPTY = {
   tec_id: '', lap_id: '', incidencia: '', descripcion: '',
@@ -18,18 +18,26 @@ const EMPTY = {
 
 const ESTADOS = ['abierto', 'en_proceso', 'cerrado'];
 
+const ESTADO_CONFIG = {
+  all:        { label: 'Todos',      icon: List,          color: 'text-secondary',  bg: 'bg-elevated' },
+  abierto:    { label: 'Abiertos',   icon: AlertTriangle, color: 'text-danger',     bg: 'bg-danger-bg' },
+  en_proceso: { label: 'En Proceso', icon: Clock,         color: 'text-warning',    bg: 'bg-warning-bg' },
+  cerrado:    { label: 'Cerrados',   icon: CheckCircle,   color: 'text-success',    bg: 'bg-success-bg' },
+};
+
 export default function TicketsPage() {
-  const { canCreateTicket, isAdmin, isTecnico } = useAuth();
-  const [tickets,  setTickets]  = useState([]);
-  const [laptops,  setLaptops]  = useState([]);
-  const [tecnicos, setTecnicos] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState('');
-  const [modal,    setModal]    = useState(false);
-  const [editing,  setEditing]  = useState(null);
-  const [form,     setForm]     = useState(EMPTY);
-  const [saving,   setSaving]   = useState(false);
-  const [deleting, setDeleting] = useState(null);
+  const { canCreateTicket, isAdmin } = useAuth();
+  const [tickets,       setTickets]      = useState([]);
+  const [laptops,       setLaptops]      = useState([]);
+  const [tecnicos,      setTecnicos]     = useState([]);
+  const [loading,       setLoading]      = useState(true);
+  const [search,        setSearch]       = useState('');
+  const [estadoFiltro,  setEstadoFiltro] = useState('all');
+  const [modal,         setModal]        = useState(false);
+  const [editing,       setEditing]      = useState(null);
+  const [form,          setForm]         = useState(EMPTY);
+  const [saving,        setSaving]       = useState(false);
+  const [deleting,      setDeleting]     = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -60,8 +68,8 @@ export default function TicketsPage() {
     try {
       const payload = {
         ...form,
-        tec_id:      form.tec_id      ? Number(form.tec_id)  : null,
-        lap_id:      form.lap_id      ? Number(form.lap_id)  : null,
+        tec_id:       form.tec_id      ? Number(form.tec_id)  : null,
+        lap_id:       form.lap_id      ? Number(form.lap_id)  : null,
         fecha_inicio: form.fecha_inicio || null,
         fecha_cierre: form.fecha_cierre || null,
       };
@@ -87,10 +95,20 @@ export default function TicketsPage() {
     return t ? t.tecnico_nombre : '—';
   };
 
-  const filtered = tickets.filter(t =>
-    [t.incidencia, t.descripcion, t.estado]
-      .some(v => v?.toLowerCase().includes(search.toLowerCase()))
-  );
+  // Conteos por estado
+  const counts = {
+    all:        tickets.length,
+    abierto:    tickets.filter(t => t.estado === 'abierto').length,
+    en_proceso: tickets.filter(t => t.estado === 'en_proceso').length,
+    cerrado:    tickets.filter(t => t.estado === 'cerrado').length,
+  };
+
+  const filtered = tickets.filter(t => {
+    const matchSearch = [t.incidencia, t.descripcion, t.estado]
+      .some(v => v?.toLowerCase().includes(search.toLowerCase()));
+    const matchEstado = estadoFiltro === 'all' || t.estado === estadoFiltro;
+    return matchSearch && matchEstado;
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -107,16 +125,51 @@ export default function TicketsPage() {
         </div>
       </div>
 
+      {/* Filtros de estado — pills */}
+      <div className="flex gap-2 flex-wrap">
+        {Object.entries(ESTADO_CONFIG).map(([key, cfg]) => {
+          const Icon    = cfg.icon;
+          const active  = estadoFiltro === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setEstadoFiltro(key)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
+                active
+                  ? `${cfg.bg} ${cfg.color} border-current border-opacity-40`
+                  : 'bg-card text-secondary border-border hover:text-white hover:bg-elevated'
+              }`}
+            >
+              <Icon size={14} />
+              {cfg.label}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${active ? 'bg-black bg-opacity-20' : 'bg-elevated'}`}>
+                {counts[key]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Search */}
       <Card className="flex items-center gap-3 py-3">
         <Search size={16} className="text-muted shrink-0" />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por incidencia, descripción, estado..."
+          placeholder="Buscar por incidencia, descripción..."
           className="flex-1 bg-transparent text-white placeholder-muted outline-none text-sm"
         />
+        {search && (
+          <button onClick={() => setSearch('')} className="text-muted hover:text-white text-xs">
+            Limpiar
+          </button>
+        )}
       </Card>
+
+      {/* Contador */}
+      <p className="text-muted text-xs">
+        Mostrando <span className="text-white font-semibold">{filtered.length}</span> de {tickets.length} tickets
+      </p>
 
       {/* Table */}
       {loading ? (
@@ -137,7 +190,7 @@ export default function TicketsPage() {
           </Thead>
           <Tbody>
             {filtered.length === 0 ? (
-              <Tr><Td colSpan={8} className="text-center text-muted py-10">No hay tickets registrados</Td></Tr>
+              <Tr><Td colSpan={8} className="text-center text-muted py-10">No hay tickets que coincidan</Td></Tr>
             ) : filtered.map(t => (
               <Tr key={t.id_ticket}>
                 <Td className="text-muted font-mono text-xs">#{t.id_ticket}</Td>
@@ -152,7 +205,7 @@ export default function TicketsPage() {
                 <Td className="text-xs">{t.fecha_cierre || '—'}</Td>
                 <Td>
                   <div className="flex gap-2">
-                    {(canCreateTicket) && (
+                    {canCreateTicket && (
                       <button onClick={() => openEdit(t)} className="p-1.5 rounded-lg text-muted hover:text-info hover:bg-info-bg transition-all">
                         <Pencil size={14} />
                       </button>

@@ -102,12 +102,7 @@ export default function TecnicosPage() {
               <Tr key={t.id_tecnico}>
                 <Td className="text-muted font-mono text-xs">#{t.id_tecnico}</Td>
                 <Td>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-warning-bg border border-warning border-opacity-30 flex items-center justify-center shrink-0">
-                      <Wrench size={14} className="text-warning" />
-                    </div>
-                    <p className="text-white font-medium">{t.tecnico_nombre}</p>
-                  </div>
+                  <p className="text-white font-medium">{t.tecnico_nombre}</p>
                 </Td>
                 <Td>
                   <div className="flex items-center gap-2">

@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getLaptops, createLaptop, updateLaptop, deleteLaptop } from '../../api/laptops';
 import { getUsuarios } from '../../api/usuarios';
 import { useAuth } from '../../context/AuthContext';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../../components/ui/Table';
 import Card from '../../components/ui/Card';
-import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Search, Laptop, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, RefreshCw, SlidersHorizontal } from 'lucide-react';
 
 const EMPTY = {
   usu_id_laptop: '', serial: '', marca: '', modelo: '', cpu: '',
@@ -20,15 +19,17 @@ const EMPTY = {
 export default function LaptopsPage() {
   const { canCreateLaptop, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [laptops,   setLaptops]   = useState([]);
-  const [usuarios,  setUsuarios]  = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [search,    setSearch]    = useState('');
-  const [modal,     setModal]     = useState(false);
-  const [editing,   setEditing]   = useState(null);
-  const [form,      setForm]      = useState(EMPTY);
-  const [saving,    setSaving]    = useState(false);
-  const [deleting,  setDeleting]  = useState(null);
+  const [laptops,     setLaptops]     = useState([]);
+  const [usuarios,    setUsuarios]    = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [search,      setSearch]      = useState('');
+  const [modal,       setModal]       = useState(false);
+  const [editing,     setEditing]     = useState(null);
+  const [form,        setForm]        = useState(EMPTY);
+  const [saving,      setSaving]      = useState(false);
+  const [deleting,    setDeleting]    = useState(null);
+  const [filtros,     setFiltros]     = useState({ marca: '', ram: '', disco: '', cpu: '' });
+  const [showFiltros, setShowFiltros] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -80,10 +81,23 @@ export default function LaptopsPage() {
     return u ? `${u.nombre} ${u.apellido}` : '—';
   };
 
-  const filtered = laptops.filter(l =>
-    [l.hostname, l.serial, l.marca, l.modelo, l.hostname]
-      .some(v => v?.toLowerCase().includes(search.toLowerCase()))
-  );
+  // Valores únicos para los selects
+  const marcasUnicas = [...new Set(laptops.map(l => l.marca).filter(Boolean))];
+  const ramsUnicas   = [...new Set(laptops.map(l => l.ram).filter(Boolean))];
+  const discosUnicos = [...new Set(laptops.map(l => l.disco).filter(Boolean))];
+  const cpusUnicos   = [...new Set(laptops.map(l => l.cpu).filter(Boolean))];
+
+  const hayFiltros = Object.values(filtros).some(v => v !== '');
+
+  const filtered = laptops.filter(l => {
+    const matchSearch = [l.hostname, l.serial, l.marca, l.modelo]
+      .some(v => v?.toLowerCase().includes(search.toLowerCase()));
+    const matchMarca = !filtros.marca || l.marca?.toLowerCase().includes(filtros.marca.toLowerCase());
+    const matchRam   = !filtros.ram   || l.ram?.toLowerCase().includes(filtros.ram.toLowerCase());
+    const matchDisco = !filtros.disco || l.disco?.toLowerCase().includes(filtros.disco.toLowerCase());
+    const matchCpu   = !filtros.cpu   || l.cpu?.toLowerCase().includes(filtros.cpu.toLowerCase());
+    return matchSearch && matchMarca && matchRam && matchDisco && matchCpu;
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -100,16 +114,93 @@ export default function LaptopsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <Card className="flex items-center gap-3 py-3">
-        <Search size={16} className="text-muted shrink-0" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por hostname, serial, marca, modelo..."
-          className="flex-1 bg-transparent text-white placeholder-muted outline-none text-sm"
-        />
-      </Card>
+      {/* Search + Filtros */}
+      <div className="space-y-3">
+        <Card className="flex items-center gap-3 py-3">
+          <Search size={16} className="text-muted shrink-0" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por hostname, serial, marca, modelo..."
+            className="flex-1 bg-transparent text-white placeholder-muted outline-none text-sm"
+          />
+          <button
+            onClick={() => setShowFiltros(!showFiltros)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              showFiltros || hayFiltros
+                ? 'bg-primary text-black'
+                : 'bg-elevated text-secondary hover:text-white'
+            }`}
+          >
+            <SlidersHorizontal size={14} />
+            Filtros {hayFiltros && `(${Object.values(filtros).filter(v => v).length})`}
+          </button>
+        </Card>
+
+        {showFiltros && (
+          <Card className="space-y-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-secondary uppercase tracking-wide">Marca</label>
+                <select
+                  value={filtros.marca}
+                  onChange={e => setFiltros({...filtros, marca: e.target.value})}
+                  className="bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary transition-all"
+                >
+                  <option value="">Todas</option>
+                  {marcasUnicas.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-secondary uppercase tracking-wide">RAM</label>
+                <select
+                  value={filtros.ram}
+                  onChange={e => setFiltros({...filtros, ram: e.target.value})}
+                  className="bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary transition-all"
+                >
+                  <option value="">Todas</option>
+                  {ramsUnicas.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-secondary uppercase tracking-wide">Disco</label>
+                <select
+                  value={filtros.disco}
+                  onChange={e => setFiltros({...filtros, disco: e.target.value})}
+                  className="bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary transition-all"
+                >
+                  <option value="">Todos</option>
+                  {discosUnicos.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-secondary uppercase tracking-wide">Procesador</label>
+                <select
+                  value={filtros.cpu}
+                  onChange={e => setFiltros({...filtros, cpu: e.target.value})}
+                  className="bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary transition-all"
+                >
+                  <option value="">Todos</option>
+                  {cpusUnicos.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            {hayFiltros && (
+              <button
+                onClick={() => setFiltros({ marca: '', ram: '', disco: '', cpu: '' })}
+                className="text-xs text-danger hover:underline"
+              >
+                Limpiar filtros
+              </button>
+            )}
+          </Card>
+        )}
+      </div>
+
+      {/* Contador */}
+      <p className="text-muted text-xs">
+        Mostrando <span className="text-white font-semibold">{filtered.length}</span> de {laptops.length} equipos
+      </p>
 
       {/* Table */}
       {loading ? (
@@ -121,6 +212,7 @@ export default function LaptopsPage() {
               <Th>Hostname</Th>
               <Th>Serial</Th>
               <Th>Marca / Modelo</Th>
+              <Th>CPU</Th>
               <Th>RAM / Disco</Th>
               <Th>Usuario asignado</Th>
               <Th>Fecha compra</Th>
@@ -129,7 +221,7 @@ export default function LaptopsPage() {
           </Thead>
           <Tbody>
             {filtered.length === 0 ? (
-              <Tr><Td colSpan={7} className="text-center text-muted py-10">No hay laptops registradas</Td></Tr>
+              <Tr><Td colSpan={8} className="text-center text-muted py-10">No hay laptops que coincidan</Td></Tr>
             ) : filtered.map(l => (
               <Tr key={l.id_laptop}>
                 <Td>
@@ -145,6 +237,7 @@ export default function LaptopsPage() {
                   <p className="text-white font-medium">{l.marca}</p>
                   <p className="text-muted text-xs">{l.modelo}</p>
                 </Td>
+                <Td className="text-xs">{l.cpu || '—'}</Td>
                 <Td>
                   <p className="text-xs">{l.ram}</p>
                   <p className="text-xs text-muted">{l.disco}</p>
@@ -173,16 +266,16 @@ export default function LaptopsPage() {
       <Modal open={modal} onClose={() => setModal(false)} title={editing ? 'Editar Laptop' : 'Nueva Laptop'} size="lg">
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Hostname" value={form.hostname} onChange={e => setForm({...form, hostname: e.target.value})} placeholder="PC-001" />
-            <Input label="Serial" value={form.serial} onChange={e => setForm({...form, serial: e.target.value})} placeholder="SN123456" />
-            <Input label="Marca" value={form.marca} onChange={e => setForm({...form, marca: e.target.value})} placeholder="Dell" />
-            <Input label="Modelo" value={form.modelo} onChange={e => setForm({...form, modelo: e.target.value})} placeholder="Latitude 5520" />
-            <Input label="CPU" value={form.cpu} onChange={e => setForm({...form, cpu: e.target.value})} placeholder="Intel Core i7" />
-            <Input label="GPU" value={form.gpu} onChange={e => setForm({...form, gpu: e.target.value})} placeholder="Intel Iris Xe" />
-            <Input label="RAM" value={form.ram} onChange={e => setForm({...form, ram: e.target.value})} placeholder="16GB DDR4" />
-            <Input label="Disco" value={form.disco} onChange={e => setForm({...form, disco: e.target.value})} placeholder="512GB SSD" />
-            <Input label="Pantalla" value={form.pantalla} onChange={e => setForm({...form, pantalla: e.target.value})} placeholder='15.6" FHD' />
-            <Input label="No. Factura" value={form.no_factura} onChange={e => setForm({...form, no_factura: e.target.value})} placeholder="FAC-001" />
+            <Input label="Hostname"    value={form.hostname}    onChange={e => setForm({...form, hostname:    e.target.value})} placeholder="PC-001" />
+            <Input label="Serial"      value={form.serial}      onChange={e => setForm({...form, serial:      e.target.value})} placeholder="SN123456" />
+            <Input label="Marca"       value={form.marca}       onChange={e => setForm({...form, marca:       e.target.value})} placeholder="Dell" />
+            <Input label="Modelo"      value={form.modelo}      onChange={e => setForm({...form, modelo:      e.target.value})} placeholder="Latitude 5520" />
+            <Input label="CPU"         value={form.cpu}         onChange={e => setForm({...form, cpu:         e.target.value})} placeholder="Intel Core i7" />
+            <Input label="GPU"         value={form.gpu}         onChange={e => setForm({...form, gpu:         e.target.value})} placeholder="Intel Iris Xe" />
+            <Input label="RAM"         value={form.ram}         onChange={e => setForm({...form, ram:         e.target.value})} placeholder="16GB DDR4" />
+            <Input label="Disco"       value={form.disco}       onChange={e => setForm({...form, disco:       e.target.value})} placeholder="512GB SSD" />
+            <Input label="Pantalla"    value={form.pantalla}    onChange={e => setForm({...form, pantalla:    e.target.value})} placeholder='15.6" FHD' />
+            <Input label="No. Factura" value={form.no_factura}  onChange={e => setForm({...form, no_factura:  e.target.value})} placeholder="FAC-001" />
             <Input label="Fecha Compra" type="date" value={form.fecha_compra} onChange={e => setForm({...form, fecha_compra: e.target.value})} />
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-secondary uppercase tracking-wide">Usuario Asignado</label>
@@ -209,4 +302,3 @@ export default function LaptopsPage() {
     </div>
   );
 }
-// navegación agregada via patch

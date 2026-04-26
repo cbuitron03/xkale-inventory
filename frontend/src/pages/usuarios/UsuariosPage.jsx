@@ -102,14 +102,7 @@ export default function UsuariosPage() {
               <Tr key={u.id_usuario}>
                 <Td className="text-muted font-mono text-xs">#{u.id_usuario}</Td>
                 <Td>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary-glow border border-primary border-opacity-30 flex items-center justify-center shrink-0">
-                      <span className="text-primary text-xs font-bold uppercase">{u.nombre?.[0]}</span>
-                    </div>
-                    <div>
-                      <p className="text-white font-medium">{u.nombre} {u.apellido}</p>
-                    </div>
-                  </div>
+                  <p className="text-white font-medium">{u.nombre} {u.apellido}</p>
                 </Td>
                 <Td>
                   <div className="flex items-center gap-2">
