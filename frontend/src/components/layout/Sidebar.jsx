@@ -29,8 +29,8 @@ export default function Sidebar() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border">
-        <span className="text-primary font-black text-xl tracking-widest">XKALE™</span>
-        <p className="text-muted text-xs mt-0.5 tracking-wider uppercase">Inventory System</p>
+        <img src="/xkale_logo.png" alt="Xkale" className="w-32 h-auto mb-1" />
+        <p className="text-muted text-xs mt-0.5 tracking-wider uppercase">Sistema de Gestión de Equipos</p>
       </div>
 
       {/* Nav */}
