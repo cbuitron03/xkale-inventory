@@ -1,0 +1,22 @@
+[Unit]
+Description=Xkale Inventory FastAPI Backend
+After=network.target
+
+[Service]
+Type=simple
+User=xkale
+Group=xkale
+WorkingDirectory=/opt/xkale-inventory/backend
+Environment="PATH=/opt/xkale-inventory/backend/venv/bin"
+EnvironmentFile=/opt/xkale-inventory/backend/.env
+ExecStart=/opt/xkale-inventory/backend/venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 2
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,102 @@
+INSTRUCCIONES DE DESPLIEGUE — xkale-inventory
+==============================================
+Servidor:  Ubuntu / Debian
+Dominio:   xkale.inventory (LAN interna, HTTPS)
+Base de datos: Aiven PostgreSQL (sin cambios, se usa la misma cadena de conexión)
+
+
+PRE-REQUISITOS
+--------------
+- Servidor Ubuntu/Debian con acceso root.
+- El servidor debe tener salida a internet para descargar paquetes y
+  conectarse a Aiven (puerto 14134).
+- Git instalado en el servidor:
+      apt-get install -y git
+
+
+PASO 1 — DNS INTERNO
+---------------------
+En el servidor DNS de la LAN, crea un registro A:
+
+    xkale.inventory  →  <IP del servidor>
+
+Si no tienes servidor DNS, añade la línea temporalmente en /etc/hosts
+de cada equipo cliente hasta configurar el DNS:
+
+    <IP del servidor>  xkale.inventory
+
+
+PASO 2 — CLONAR EL REPOSITORIO EN EL SERVIDOR
+-----------------------------------------------
+    git clone <URL del repositorio> /tmp/xkale-inventory
+    cd /tmp/xkale-inventory
+
+
+PASO 3 — EJECUTAR EL SCRIPT DE DESPLIEGUE
+------------------------------------------
+    sudo bash deployment/deploy.sh
+
+El script hace automáticamente:
+  1. Instala nginx, python3, nodejs, openssl.
+  2. Crea el usuario de sistema 'xkale'.
+  3. Copia el código a /opt/xkale-inventory/.
+  4. Crea el entorno virtual Python e instala dependencias.
+  5. Construye el frontend (npm run build).
+  6. Copia los archivos estáticos a /var/www/xkale-inventory/.
+  7. Genera el certificado SSL autofirmado en /etc/nginx/ssl/.
+  8. Instala y activa la configuración de nginx.
+  9. Instala y arranca el servicio systemd xkale-inventory.
+
+
+PASO 4 — INSTALAR EL CERTIFICADO EN LOS EQUIPOS CLIENTE
+---------------------------------------------------------
+Como el certificado es autofirmado, los navegadores mostrarán una
+advertencia a menos que lo instales como raíz de confianza.
+
+El certificado está en el servidor en:
+    /etc/nginx/ssl/xkale.inventory.crt
+
+Cópialo a cada equipo y:
+
+  Windows:
+    Doble clic en el archivo .crt
+    → "Instalar certificado"
+    → Almacén: "Entidades de certificación raíz de confianza"
+
+  Ubuntu / Debian:
+    sudo cp xkale.inventory.crt /usr/local/share/ca-certificates/
+    sudo update-ca-certificates
+
+  macOS:
+    Doble clic en el archivo .crt → se abre Acceso a Llaveros
+    → Doble clic en el certificado importado
+    → "Confiar" → "Al usar este certificado: Confiar siempre"
+
+
+PASO 5 — VERIFICAR
+-------------------
+Desde un equipo de la LAN (con DNS o /etc/hosts configurado):
+
+    https://xkale.inventory
+
+Debe cargar la pantalla de login de la aplicación.
+
+
+COMANDOS ÚTILES EN EL SERVIDOR
+--------------------------------
+Ver estado del backend:
+    systemctl status xkale-inventory
+
+Ver logs en tiempo real:
+    journalctl -u xkale-inventory -f
+
+Reiniciar el backend:
+    systemctl restart xkale-inventory
+
+Recargar nginx (tras cambios de config):
+    nginx -t && systemctl reload nginx
+
+Actualizar la aplicación (re-ejecutar el script):
+    cd /tmp/xkale-inventory
+    git pull
+    sudo bash deployment/deploy.sh
