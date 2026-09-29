@@ -102,8 +102,24 @@ Si el servidor cambia de IP: sudo rm /etc/nginx/ssl/xkale.inventory.crt y
 volver a ejecutar deploy.sh.
 
 
-ACTUALIZAR LA APLICACIÓN
-------------------------
+ACTUALIZAR LA APLICACIÓN (automático)
+-------------------------------------
+deploy.sh instala el timer "xkale-autodeploy": cada 2 minutos revisa GitHub y,
+si master tiene commits nuevos, hace git pull en el clon (~/xkale-inventory)
+y ejecuta deploy.sh. Basta con hacer push a master; se publica en ~2-5 minutos.
+
+  Ver qué se desplegó / errores:   journalctl -u xkale-autodeploy -n 50
+  Próxima revisión:                systemctl list-timers xkale-autodeploy.timer
+  Forzar una revisión ya:          sudo systemctl start xkale-autodeploy
+  Desactivar:                      sudo systemctl disable --now xkale-autodeploy.timer
+  Reactivar:                       sudo systemctl enable --now xkale-autodeploy.timer
+
+Si un commit falla al desplegar, la app sigue con la versión anterior y ese
+commit no se reintenta en cada ciclo: se reintenta con el siguiente push.
+No edites archivos dentro del clon del servidor: con cambios locales el
+git pull automático se detiene (el log lo indica).
+
+Manual (sigue funcionando igual):
     cd ~/xkale-inventory
     git pull
     sudo bash deployment/deploy.sh

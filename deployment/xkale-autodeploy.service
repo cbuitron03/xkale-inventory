@@ -1,0 +1,10 @@
+[Unit]
+Description=Xkale Inventory - despliegue automático desde GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# deploy.sh sustituye __REPO_DIR__ por la ruta del clon al instalar esta unidad
+ExecStart=/bin/bash __REPO_DIR__/deployment/auto-deploy.sh
+TimeoutStartSec=30min

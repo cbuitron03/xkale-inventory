@@ -1,0 +1,10 @@
+[Unit]
+Description=Revisa GitHub cada 2 minutos y despliega si hay commits nuevos
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

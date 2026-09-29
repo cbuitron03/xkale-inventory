@@ -5,6 +5,13 @@
 # Para actualizar: git pull && sudo bash deployment/deploy.sh
 set -euo pipefail
 
+# Un solo despliegue a la vez (manual o automático)
+exec 9>/run/xkale-deploy.lock
+if ! flock -n 9; then
+    echo "Ya hay un despliegue en curso; inténtalo de nuevo en unos minutos."
+    exit 1
+fi
+
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_DIR="/opt/xkale-inventory"
 WEB_ROOT="/var/www/xkale-inventory"
@@ -132,6 +139,20 @@ systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
 systemctl restart "$SERVICE_NAME"
 
+# Despliegue automático: se habilita solo la primera vez que se instala, así un
+# 'systemctl disable --now xkale-autodeploy.timer' posterior se respeta.
+echo "==> Instalando despliegue automático..."
+PRIMERA_VEZ=0
+[[ -f /etc/systemd/system/xkale-autodeploy.timer ]] || PRIMERA_VEZ=1
+sed "s|__REPO_DIR__|$REPO_DIR|g" "$REPO_DIR/deployment/xkale-autodeploy.service" \
+    > /etc/systemd/system/xkale-autodeploy.service
+cp "$REPO_DIR/deployment/xkale-autodeploy.timer" /etc/systemd/system/xkale-autodeploy.timer
+systemctl daemon-reload
+if [[ $PRIMERA_VEZ == 1 ]]; then
+    systemctl enable --now xkale-autodeploy.timer
+fi
+echo "    Timer: $(systemctl is-enabled xkale-autodeploy.timer 2>/dev/null || true)"
+
 # ── 11. Verificación ──────────────────────────────────────────────────────────
 echo "==> Verificando..."
 for _ in $(seq 1 15); do
@@ -145,6 +166,10 @@ else
     echo "ERROR: la API no responde. Revisa: journalctl -u $SERVICE_NAME -n 50"
     exit 1
 fi
+
+# Commit desplegado (lo usa auto-deploy.sh para saber si hay algo nuevo)
+mkdir -p /var/lib/xkale-inventory
+git -c safe.directory="$REPO_DIR" -C "$REPO_DIR" rev-parse HEAD > /var/lib/xkale-inventory/deployed-commit
 
 IP=$(hostname -I | awk '{print $1}')
 echo ""
