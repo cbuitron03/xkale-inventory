@@ -51,21 +51,55 @@ verifica la conexión a la base, compila el frontend, genera el certificado,
 configura nginx y systemd, y al final comprueba que la API responde.
 
 
-PASO 4 — DNS Y CERTIFICADO EN LOS EQUIPOS CLIENTE
--------------------------------------------------
-DNS: en el servidor DNS de la LAN crea un registro A
-    xkale.inventory  →  <IP del servidor>
-o, temporalmente, añade en /etc/hosts (o C:\Windows\System32\drivers\etc\hosts):
-    <IP del servidor>  xkale.inventory
+PASO 4 — NOMBRE xkale.inventory EN LA LAN (DNS)
+-----------------------------------------------
+El servidor debe tener IP fija (reserva DHCP o IP estática): 192.168.2.249.
 
-También se puede entrar por https://<IP del servidor>, pero el navegador
-avisará porque el certificado es para xkale.inventory.
+Opción A (recomendada) — DNS interno. En el DNS que usan los equipos
+(Windows Server DNS / router / firewall):
+    Zona directa:  inventory
+    Registro A:    xkale  →  192.168.2.249
+  (Windows Server: Administrador DNS → Zonas de búsqueda directa → Nueva zona
+   "inventory" → Nuevo host (A) "xkale" con IP 192.168.2.249)
 
-Certificado (para que el navegador no muestre advertencias), copia
-/etc/nginx/ssl/xkale.inventory.crt a cada equipo e instálalo como raíz de confianza:
-  Windows: doble clic → Instalar certificado → "Entidades de certificación raíz de confianza"
-  macOS:   doble clic → Acceso a Llaveros → abrir el certificado → Confiar → "Confiar siempre"
-  Ubuntu:  sudo cp xkale.inventory.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates
+Opción B — archivo hosts en cada equipo (temporal o equipos sueltos):
+    Windows: C:\Windows\System32\drivers\etc\hosts   (como administrador)
+    macOS:   /etc/hosts
+    línea:   192.168.2.249  xkale.inventory
+
+Comprobar desde un cliente:  nslookup xkale.inventory   (o ping xkale.inventory)
+Al ser un dominio interno, escribe la dirección completa con https:// la
+primera vez; si no, el navegador puede tratarla como una búsqueda.
+
+
+PASO 5 — CONFIAR EN EL CERTIFICADO (quita "Conexión no segura")
+---------------------------------------------------------------
+deploy.sh crea una CA interna de Xkale y firma con ella el certificado del
+servidor. En los clientes se instala SOLO la CA, una única vez:
+    /etc/nginx/ssl/xkale-ca.crt
+    descargable en:  http://192.168.2.249/xkale-ca.crt
+
+Equipos gestionados por Intune (recomendado, llega a todos a la vez):
+  Intune → Dispositivos → Configuración → Crear → Windows 10 y posterior →
+  Plantillas → "Certificado de confianza" → subir xkale-ca.crt →
+  Almacén: "Raíz de equipo" → asignar a "Todos los dispositivos".
+  (Para macOS: mismo perfil "Certificado de confianza" en la plataforma macOS.)
+
+A mano:
+  Windows: doble clic en xkale-ca.crt → Instalar certificado → Equipo local →
+           "Entidades de certificación raíz de confianza"
+  macOS:   sudo security add-trusted-cert -d -r trustRoot \
+             -k /Library/Keychains/System.keychain xkale-ca.crt
+  Ubuntu:  sudo cp xkale-ca.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates
+
+Cierra y vuelve a abrir el navegador después de instalarla. Chrome y Edge usan
+el almacén del sistema; Firefox en Windows también si está activada la
+política "enterprise roots" (activada por defecto en versiones recientes).
+
+El certificado del servidor dura 825 días; deploy.sh lo renueva solo cuando le
+faltan menos de 30 días, con la misma CA, sin tocar los clientes.
+Si el servidor cambia de IP: sudo rm /etc/nginx/ssl/xkale.inventory.crt y
+volver a ejecutar deploy.sh.
 
 
 ACTUALIZAR LA APLICACIÓN

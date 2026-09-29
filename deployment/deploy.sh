@@ -101,11 +101,14 @@ rsync -a --delete "$APP_DIR/frontend/dist/" "$WEB_ROOT/"
 chown -R www-data:www-data "$WEB_ROOT"
 
 # ── 8. Certificado SSL ────────────────────────────────────────────────────────
-if [[ ! -f "/etc/nginx/ssl/$DOMAIN.crt" ]]; then
-    echo "==> Generando certificado SSL autofirmado..."
+# Se (re)genera si no hay CA interna (certificado autofirmado antiguo) o si vence en menos de 30 días
+SSL_DIR="/etc/nginx/ssl"
+if [[ ! -f "$SSL_DIR/xkale-ca.crt" || ! -f "$SSL_DIR/$DOMAIN.crt" ]] \
+   || ! openssl x509 -checkend 2592000 -noout -in "$SSL_DIR/$DOMAIN.crt" >/dev/null; then
+    echo "==> Generando certificados SSL (CA interna)..."
     bash "$REPO_DIR/deployment/gen-ssl.sh"
 else
-    echo "==> Certificado SSL ya existe, omitiendo generación."
+    echo "==> Certificado SSL vigente, omitiendo generación."
 fi
 
 # ── 9. Configuración de nginx ─────────────────────────────────────────────────
