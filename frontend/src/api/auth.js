@@ -15,3 +15,4 @@ export const getUsers     = ()           => client.get('/auth/users').then(r => 
 export const registerUser = (data)       => client.post('/auth/register', data).then(r => r.data);
 export const changePassword = (data)     => client.put('/auth/change-password', data).then(r => r.data);
 export const toggleUser   = (username)   => client.put(`/auth/toggle/${username}`).then(r => r.data);
+export const changeRole   = (username, rol) => client.put(`/auth/role/${username}`, { rol }).then(r => r.data);

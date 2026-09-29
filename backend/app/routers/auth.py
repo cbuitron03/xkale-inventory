@@ -29,6 +29,9 @@ class ChangePassword(BaseModel):
     username:     str
     new_password: str
 
+class ChangeRole(BaseModel):
+    rol: str
+
 class TokenOut(BaseModel):
     access_token: str
     token_type:   str
@@ -88,6 +91,23 @@ def toggle_user(username: str, db: Session = Depends(get_db), _=Depends(require_
     user.activo = not user.activo
     db.commit()
     return {"message": f"Usuario {'activado' if user.activo else 'desactivado'}", "activo": user.activo}
+
+# ── Cambiar rol (solo admin) ──────────────────────────────
+@router.put("/role/{username}", response_model=UserOut)
+def change_role(username: str, data: ChangeRole, db: Session = Depends(get_db), _=Depends(require_admin)):
+    if data.rol not in ("admin", "tecnico", "inventario"):
+        raise HTTPException(status_code=400, detail="Rol inválido")
+    user = db.query(AuthUser).filter(AuthUser.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.rol == "admin" and data.rol != "admin":
+        admins_activos = db.query(AuthUser).filter(AuthUser.rol == "admin", AuthUser.activo == True).count()
+        if user.activo and admins_activos <= 1:
+            raise HTTPException(status_code=400, detail="Debe quedar al menos un admin activo")
+    user.rol = data.rol
+    db.commit()
+    db.refresh(user)
+    return user
 
 # ── Perfil propio ─────────────────────────────────────────
 @router.get("/me", response_model=UserOut)

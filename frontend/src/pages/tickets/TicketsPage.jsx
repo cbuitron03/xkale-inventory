@@ -9,6 +9,7 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { ESTADOS_TICKET } from '../../utils/etiquetas';
 import { Plus, Pencil, Trash2, Search, RefreshCw, AlertTriangle, Clock, CheckCircle, List } from 'lucide-react';
 
 const EMPTY = {
@@ -16,7 +17,6 @@ const EMPTY = {
   estado: 'abierto', fecha_inicio: '', fecha_cierre: '', solucion: '',
 };
 
-const ESTADOS = ['abierto', 'en_proceso', 'cerrado'];
 
 const ESTADO_CONFIG = {
   all:        { label: 'Todos',      icon: List,          color: 'text-secondary',  bg: 'bg-elevated' },
@@ -277,7 +277,7 @@ export default function TicketsPage() {
                 onChange={e => setForm({...form, estado: e.target.value})}
                 className="bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-primary transition-all"
               >
-                {ESTADOS.map(s => <option key={s} value={s}>{s}</option>)}
+                {ESTADOS_TICKET.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
               </select>
             </div>
             <Input label="Fecha Inicio" type="date" value={form.fecha_inicio} onChange={e => setForm({...form, fecha_inicio: e.target.value})} />
