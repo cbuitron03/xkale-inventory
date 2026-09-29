@@ -16,7 +16,10 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // Un 401 del propio login son credenciales incorrectas, no una sesión vencida:
+    // se deja pasar para que LoginPage muestre el mensaje
+    const esLogin = err.config?.url?.includes('/auth/login');
+    if (err.response?.status === 401 && !esLogin) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

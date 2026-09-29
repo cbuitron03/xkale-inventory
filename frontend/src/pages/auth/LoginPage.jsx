@@ -18,7 +18,8 @@ export default function LoginPage() {
       await login(form.username, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Usuario o contraseña incorrectos');
+      if (!err.response) setError('No se pudo conectar con el servidor. Inténtalo de nuevo.');
+      else setError(err.response.data?.detail || 'Usuario o contraseña incorrectos');
     } finally {
       setLoading(false);
     }
