@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**xkale-inventory** is an IT asset management system for tracking laptops, employees (usuarios), technicians (técnicos), and support tickets. The UI is entirely in Spanish. It uses a React frontend and FastAPI backend with a cloud-hosted PostgreSQL database (Aiven).
+**xkale-inventory** is an IT asset management system for tracking laptops, employees (usuarios), technicians (técnicos), and support tickets. The UI is entirely in Spanish. It uses a React frontend and FastAPI backend with a PostgreSQL database hosted on the internal Ubuntu server (previously Aiven).
 
 ---
 
@@ -48,7 +48,7 @@ The frontend proxies API calls to `http://127.0.0.1:8000` via `VITE_API_URL` in 
 ### Backend (`backend/app/`)
 
 - **FastAPI** with modular routers in `routers/` — one file per resource (`auth`, `laptops`, `tickets`, `usuarios`, `tecnicos`, `consultas`); interactive API docs at `http://127.0.0.1:8000/docs`
-- **`main.py`** — mounts all routers, permissive CORS (all origins allowed)
+- **`main.py`** — mounts all routers; CORS limited to the Vite dev server and `https://xkale.inventory`
 - **`auth.py`** — JWT (HS256, 480 min expiry), bcrypt password hashing, three roles: `admin`, `tecnico`, `inventario`; role guards are FastAPI `Depends` decorators (`require_admin`, `require_admin_or_tecnico`, `require_any_role`)
 - **`database.py`** — SQLAlchemy `SessionLocal`; routers inject a DB session via `Depends(get_db)`
 - **`models/`** — SQLAlchemy ORM models; key relationships: `Usuario` ← `Laptop` ← `Ticket`; primary keys follow the pattern `id_<tablename>`
@@ -92,6 +92,6 @@ The frontend's `LaptopDetail` page (`/laptops/:hostname`) resolves via `GET /con
 
 - Field names and UI labels are in **Spanish** — keep new additions consistent.
 - Backend schemas use `model_config = ConfigDict(from_attributes=True)` (Pydantic v2 ORM mode).
-- Do not add `allow_origins` restrictions until the deployment target is defined — the current permissive CORS is intentional for development.
+- In production the API lives under `/api`: nginx strips the prefix and uvicorn runs with `--root-path /api` (see `deployment/`). Backend routes stay unprefixed; the frontend uses `VITE_API_URL=/api` from `.env.production`. Deploy with `sudo bash deployment/deploy.sh` (steps in `deployment/instrucciones.txt`).
 - The `consultas` router handles cross-resource query endpoints (not a standard CRUD resource) — see the dedicated section above.
 - Standard CRUD routers address resources by integer PK (`/laptops/{id}`); the `consultas` router uses natural keys (hostname, correo, marca).
