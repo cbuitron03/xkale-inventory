@@ -60,6 +60,8 @@ class LaptopDetalle(BaseModel):
     no_factura:   Optional[str]
     fecha_compra: Optional[date]
     hostname:     Optional[str]
+    garantia_hasta:   Optional[date] = None
+    garantia_vigente: Optional[bool] = None
     usuario:      Optional[UsuarioResumen]
     tickets:      List[TicketResumen] = []
     class Config:

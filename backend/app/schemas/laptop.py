@@ -15,6 +15,7 @@ class LaptopBase(BaseModel):
     no_factura:    Optional[str]  = None
     fecha_compra:  Optional[date] = None
     hostname:      Optional[str]  = None
+    garantia_hasta: Optional[date] = None
 
 class LaptopCreate(LaptopBase):
     pass
@@ -24,5 +25,6 @@ class LaptopUpdate(LaptopBase):
 
 class LaptopOut(LaptopBase):
     id_laptop: int
+    garantia_vigente: Optional[bool] = None
     class Config:
         from_attributes = True

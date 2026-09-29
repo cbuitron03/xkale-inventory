@@ -8,12 +8,14 @@ import Card from '../../components/ui/Card';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import Badge from '../../components/ui/Badge';
+import { estadoGarantia } from '../../utils/garantia';
 import { Plus, Pencil, Trash2, Search, RefreshCw, SlidersHorizontal } from 'lucide-react';
 
 const EMPTY = {
   usu_id_laptop: '', serial: '', marca: '', modelo: '', cpu: '',
   gpu: '', ram: '', disco: '', pantalla: '', no_factura: '',
-  fecha_compra: '', hostname: '',
+  fecha_compra: '', hostname: '', garantia_hasta: '',
 };
 
 export default function LaptopsPage() {
@@ -47,6 +49,7 @@ export default function LaptopsPage() {
       ...l,
       usu_id_laptop: l.usu_id_laptop ?? '',
       fecha_compra:  l.fecha_compra  ?? '',
+      garantia_hasta: l.garantia_hasta ?? '',
     });
     setModal(true);
   };
@@ -59,6 +62,7 @@ export default function LaptopsPage() {
         ...form,
         usu_id_laptop: form.usu_id_laptop ? Number(form.usu_id_laptop) : null,
         fecha_compra:  form.fecha_compra  || null,
+        garantia_hasta: form.garantia_hasta || null,
       };
       if (editing) await updateLaptop(editing.id_laptop, payload);
       else         await createLaptop(payload);
@@ -216,12 +220,13 @@ export default function LaptopsPage() {
               <Th>RAM / Disco</Th>
               <Th>Usuario asignado</Th>
               <Th>Fecha compra</Th>
+              <Th>Garantía</Th>
               <Th>Acciones</Th>
             </Tr>
           </Thead>
           <Tbody>
             {filtered.length === 0 ? (
-              <Tr><Td colSpan={8} className="text-center text-muted py-10">No hay laptops que coincidan</Td></Tr>
+              <Tr><Td colSpan={9} className="text-center text-muted py-10">No hay laptops que coincidan</Td></Tr>
             ) : filtered.map(l => (
               <Tr key={l.id_laptop}>
                 <Td>
@@ -244,6 +249,10 @@ export default function LaptopsPage() {
                 </Td>
                 <Td>{getUsuarioNombre(l.usu_id_laptop)}</Td>
                 <Td className="text-xs">{l.fecha_compra || '—'}</Td>
+                <Td>
+                  <Badge value={estadoGarantia(l)} />
+                  {l.garantia_hasta && <p className="text-xs text-muted mt-1">hasta {l.garantia_hasta}</p>}
+                </Td>
                 <Td>
                   <div className="flex gap-2">
                     <button onClick={() => openEdit(l)} className="p-1.5 rounded-lg text-muted hover:text-info hover:bg-info-bg transition-all">
@@ -277,6 +286,7 @@ export default function LaptopsPage() {
             <Input label="Pantalla"    value={form.pantalla}    onChange={e => setForm({...form, pantalla:    e.target.value})} placeholder='15.6" FHD' />
             <Input label="No. Factura" value={form.no_factura}  onChange={e => setForm({...form, no_factura:  e.target.value})} placeholder="FAC-001" />
             <Input label="Fecha Compra" type="date" value={form.fecha_compra} onChange={e => setForm({...form, fecha_compra: e.target.value})} />
+            <Input label="Garantía hasta" type="date" value={form.garantia_hasta} onChange={e => setForm({...form, garantia_hasta: e.target.value})} />
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-secondary uppercase tracking-wide">Usuario Asignado</label>
               <select

@@ -5,10 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import Badge from '../../components/ui/Badge';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import { estadoGarantia } from '../../utils/garantia';
 import {
   ArrowLeft, Laptop, User, Cpu, HardDrive,
   Monitor, Calendar, Hash, Ticket, Wrench,
-  CheckCircle, Clock, AlertTriangle
+  CheckCircle, Clock, AlertTriangle, ShieldCheck
 } from 'lucide-react';
 
 export default function LaptopDetail() {
@@ -104,6 +105,12 @@ export default function LaptopDetail() {
               <SpecRow icon={Monitor}   label="Pantalla"  value={data.pantalla} />
               <SpecRow icon={Hash}      label="Factura"   value={data.no_factura} />
               <SpecRow icon={Calendar}  label="Compra"    value={data.fecha_compra} />
+              <SpecRow icon={ShieldCheck} label="Garantía" value={
+                <span className="flex items-center gap-2">
+                  <Badge value={estadoGarantia(data)} />
+                  {data.garantia_hasta && <span className="text-xs text-muted">hasta {data.garantia_hasta}</span>}
+                </span>
+              } />
             </div>
           </Card>
 

@@ -10,6 +10,9 @@ const config = {
   admin:        { label: 'Admin',      cls: 'bg-primary-glow text-primary' },
   tecnico:      { label: 'Técnico',    cls: 'bg-info-bg    text-info'    },
   inventario:   { label: 'Inventario', cls: 'bg-elevated   text-secondary'},
+  vigente:      { label: 'Vigente',    cls: 'bg-success-bg text-success' },
+  expirada:     { label: 'Expirada',   cls: 'bg-danger-bg  text-danger'  },
+  sin_garantia: { label: 'Sin garantía', cls: 'bg-elevated text-muted'    },
 };
 
 export default function Badge({ value, className }) {

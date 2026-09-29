@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import date
 from app.database import Base
 
 class Laptop(Base):
@@ -18,6 +19,14 @@ class Laptop(Base):
     no_factura   = Column(Text)
     fecha_compra = Column(Date)
     hostname     = Column(Text)
+    garantia_hasta = Column(Date)
 
     usuario  = relationship("Usuario")
     tickets  = relationship("Ticket", back_populates="laptop")
+
+    @property
+    def garantia_vigente(self):
+        # Se calcula en cada lectura: al pasar la fecha queda expirada sin intervención
+        if self.garantia_hasta is None:
+            return None
+        return self.garantia_hasta >= date.today()
