@@ -13,6 +13,8 @@ const config = {
   vigente:      { label: 'Vigente',    cls: 'bg-success-bg text-success' },
   expirada:     { label: 'Expirada',   cls: 'bg-danger-bg  text-danger'  },
   sin_garantia: { label: 'Sin garantía', cls: 'bg-elevated text-muted'    },
+  activa:       { label: 'Activa',     cls: 'bg-success-bg text-success' },
+  inactiva:     { label: 'Inactiva',   cls: 'bg-elevated   text-muted'   },
 };
 
 export default function Badge({ value, className }) {

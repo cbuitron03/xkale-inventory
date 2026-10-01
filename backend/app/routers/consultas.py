@@ -62,6 +62,7 @@ class LaptopDetalle(BaseModel):
     hostname:     Optional[str]
     garantia_hasta:   Optional[date] = None
     garantia_vigente: Optional[bool] = None
+    activa:           bool = True
     usuario:      Optional[UsuarioResumen]
     tickets:      List[TicketResumen] = []
     class Config:

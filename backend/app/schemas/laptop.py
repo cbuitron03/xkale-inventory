@@ -16,6 +16,7 @@ class LaptopBase(BaseModel):
     fecha_compra:  Optional[date] = None
     hostname:      Optional[str]  = None
     garantia_hasta: Optional[date] = None
+    activa:        bool           = True
 
 class LaptopCreate(LaptopBase):
     pass

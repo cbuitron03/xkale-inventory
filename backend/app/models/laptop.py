@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, Date, ForeignKey
+from sqlalchemy import Column, Integer, Text, Date, Boolean, ForeignKey, true
 from sqlalchemy.orm import relationship
 from datetime import date
 from app.database import Base
@@ -20,6 +20,7 @@ class Laptop(Base):
     fecha_compra = Column(Date)
     hostname     = Column(Text)
     garantia_hasta = Column(Date)
+    activa         = Column(Boolean, nullable=False, default=True, server_default=true())
 
     usuario  = relationship("Usuario")
     tickets  = relationship("Ticket", back_populates="laptop")

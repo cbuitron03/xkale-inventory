@@ -15,8 +15,10 @@ import { Plus, Pencil, Trash2, Search, RefreshCw, SlidersHorizontal } from 'luci
 const EMPTY = {
   usu_id_laptop: '', serial: '', marca: '', modelo: '', cpu: '',
   gpu: '', ram: '', disco: '', pantalla: '', no_factura: '',
-  fecha_compra: '', hostname: '', garantia_hasta: '',
+  fecha_compra: '', hostname: '', garantia_hasta: '', activa: true,
 };
+
+const FILTROS_VACIOS = { marca: '', ram: '', disco: '', cpu: '', estado: '' };
 
 export default function LaptopsPage() {
   const { canCreateLaptop, isAdmin } = useAuth();
@@ -30,7 +32,7 @@ export default function LaptopsPage() {
   const [form,        setForm]        = useState(EMPTY);
   const [saving,      setSaving]      = useState(false);
   const [deleting,    setDeleting]    = useState(null);
-  const [filtros,     setFiltros]     = useState({ marca: '', ram: '', disco: '', cpu: '' });
+  const [filtros,     setFiltros]     = useState(FILTROS_VACIOS);
   const [showFiltros, setShowFiltros] = useState(false);
 
   const load = () => {
@@ -100,7 +102,8 @@ export default function LaptopsPage() {
     const matchRam   = !filtros.ram   || l.ram?.toLowerCase().includes(filtros.ram.toLowerCase());
     const matchDisco = !filtros.disco || l.disco?.toLowerCase().includes(filtros.disco.toLowerCase());
     const matchCpu   = !filtros.cpu   || l.cpu?.toLowerCase().includes(filtros.cpu.toLowerCase());
-    return matchSearch && matchMarca && matchRam && matchDisco && matchCpu;
+    const matchEstado = !filtros.estado || (filtros.estado === 'activa') === l.activa;
+    return matchSearch && matchMarca && matchRam && matchDisco && matchCpu && matchEstado;
   });
 
   return (
@@ -110,7 +113,7 @@ export default function LaptopsPage() {
         <div>
           <p className="text-primary text-xs font-bold tracking-widest uppercase mb-1">Inventario</p>
           <h1 className="text-white text-2xl font-black">Laptops</h1>
-          <p className="text-muted text-sm mt-1">{laptops.length} equipos registrados</p>
+          <p className="text-muted text-sm mt-1">{laptops.length} equipos registrados · {laptops.filter(l => l.activa).length} activos</p>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" icon={RefreshCw} onClick={load}>Actualizar</Button>
@@ -143,7 +146,19 @@ export default function LaptopsPage() {
 
         {showFiltros && (
           <Card className="space-y-3">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-secondary uppercase tracking-wide">Estado</label>
+                <select
+                  value={filtros.estado}
+                  onChange={e => setFiltros({...filtros, estado: e.target.value})}
+                  className="bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary transition-all"
+                >
+                  <option value="">Todas</option>
+                  <option value="activa">Activas</option>
+                  <option value="inactiva">Inactivas</option>
+                </select>
+              </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-secondary uppercase tracking-wide">Marca</label>
                 <select
@@ -191,7 +206,7 @@ export default function LaptopsPage() {
             </div>
             {hayFiltros && (
               <button
-                onClick={() => setFiltros({ marca: '', ram: '', disco: '', cpu: '' })}
+                onClick={() => setFiltros(FILTROS_VACIOS)}
                 className="text-xs text-danger hover:underline"
               >
                 Limpiar filtros
@@ -221,12 +236,13 @@ export default function LaptopsPage() {
               <Th>Usuario asignado</Th>
               <Th>Fecha compra</Th>
               <Th>Garantía</Th>
+              <Th>Estado</Th>
               <Th>Acciones</Th>
             </Tr>
           </Thead>
           <Tbody>
             {filtered.length === 0 ? (
-              <Tr><Td colSpan={9} className="text-center text-muted py-10">No hay laptops que coincidan</Td></Tr>
+              <Tr><Td colSpan={10} className="text-center text-muted py-10">No hay laptops que coincidan</Td></Tr>
             ) : filtered.map(l => (
               <Tr key={l.id_laptop}>
                 <Td>
@@ -253,6 +269,7 @@ export default function LaptopsPage() {
                   <Badge value={estadoGarantia(l)} />
                   {l.garantia_hasta && <p className="text-xs text-muted mt-1">hasta {l.garantia_hasta}</p>}
                 </Td>
+                <Td><Badge value={l.activa ? 'activa' : 'inactiva'} /></Td>
                 <Td>
                   <div className="flex gap-2">
                     <button onClick={() => openEdit(l)} className="p-1.5 rounded-lg text-muted hover:text-info hover:bg-info-bg transition-all">
@@ -287,6 +304,17 @@ export default function LaptopsPage() {
             <Input label="No. Factura" value={form.no_factura}  onChange={e => setForm({...form, no_factura:  e.target.value})} placeholder="FAC-001" />
             <Input label="Fecha Compra" type="date" value={form.fecha_compra} onChange={e => setForm({...form, fecha_compra: e.target.value})} />
             <Input label="Garantía hasta" type="date" value={form.garantia_hasta} onChange={e => setForm({...form, garantia_hasta: e.target.value})} />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-secondary uppercase tracking-wide">Estado</label>
+              <select
+                value={form.activa ? 'true' : 'false'}
+                onChange={e => setForm({...form, activa: e.target.value === 'true'})}
+                className="bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-primary transition-all"
+              >
+                <option value="true">Activa</option>
+                <option value="false">Inactiva</option>
+              </select>
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-secondary uppercase tracking-wide">Usuario Asignado</label>
               <select

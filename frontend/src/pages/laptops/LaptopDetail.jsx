@@ -48,7 +48,10 @@ export default function LaptopDetail() {
         </button>
         <div className="flex-1">
           <p className="text-primary text-xs font-bold tracking-widest uppercase mb-1">Inventario</p>
-          <h1 className="text-white text-2xl font-black font-mono">{data.hostname || 'Sin hostname'}</h1>
+          <h1 className="text-white text-2xl font-black font-mono flex items-center gap-3">
+            {data.hostname || 'Sin hostname'}
+            <Badge value={data.activa ? 'activa' : 'inactiva'} />
+          </h1>
           <p className="text-muted text-sm mt-1">{data.marca} {data.modelo}</p>
         </div>
         {canCreateTicket && (
